@@ -1,18 +1,116 @@
 ﻿#include<iostream>
+#include<stdio.h>
 #include<conio.h>
 #include<Windows.h>
 #include<time.h>
 #include<stdlib.h>
 using namespace std;
 
-// Xử lý loang
 // Thuật toán sinh mìn sau khi bấm lần đầu
+// Thêm bộ đếm thời gian chơi
+// Thiết kế lại giao diện
+// Lưu kết quả vào file text
 #define MAX 50
-
-int col = 10, row = 10, level, x, y, mineNum = 10, cellLeft = (col - 2) * (row - 2) - mineNum;
+int col, row, level, x, y, mineNum, cellLeft = (col - 2) * (row - 2) - mineNum;
+int X[8] = { -1,-1,-1,0,1,1,1,0 };
+int Y[8] = { -1,0,1,1,1,0,-1,-1 };
 int Matrix[MAX][MAX];
 bool Opened[MAX][MAX];// check whether the cell is opened
 
+//---------------***---
+typedef struct node
+{
+	int data;
+	node *nextNode;
+}NODE;
+
+typedef struct Queue_of_Nodes
+{
+	int capacity;
+	int length;
+	NODE* front;
+	NODE* rear;
+}Queue;
+
+NODE* newNode()
+{
+	NODE *temp = new NODE();
+	temp->data = 0;
+	temp->nextNode = NULL;
+	return temp;
+}
+
+Queue* initiateQueue()
+{
+	Queue* q = new Queue();
+	q->capacity = 100;
+	q->front = NULL;
+	q->rear = NULL;
+	q->length = -1;
+	return q;
+}
+
+bool is_Empty(Queue* queue)
+{
+	return queue->length == -1;
+}
+
+bool is_Full(Queue* queue)
+{
+	return queue->length == queue->capacity - 1;
+}
+
+void Enqueue(Queue* queue, int value)
+{
+	if (is_Full(queue))
+	{
+		return;
+	}
+	NODE* temp = newNode();
+	if (is_Empty(queue))
+	{
+		temp->data = value;
+		queue->front = queue->rear = temp;
+		queue->length++;
+	}
+	else if (queue->length == 0)
+	{
+		temp->data = value;
+		queue->rear = temp;
+		queue->front->nextNode = temp;
+		queue->length++;
+	}
+	else
+
+	{
+		temp->data = value;
+		queue->rear->nextNode = temp;
+		queue->rear = temp;
+		queue->length++;
+	}
+}
+
+int Dequeue(Queue* queue)
+{
+	if (is_Empty(queue))
+	{
+		return -1;
+	}
+	node* temp = queue->front;
+	if (queue->length == 0)
+	{
+		queue->length--;
+		return queue->front->data;
+	}
+	else
+	{
+		queue->length--;
+		queue->front = queue->front->nextNode;
+		return queue->front->data;
+	}
+}
+
+//---------------***---
 void refresh()
 {
 	for (int i = 0; i < row; i++)
@@ -23,12 +121,12 @@ void refresh()
 		}
 }
 
-void gotoxy(int x, int y)
+void gotoxy(int xCOR, int yCOR)
 {
 	static HANDLE h = NULL;
 	if (!h)
 		h = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD c = { x, y };
+	COORD c = { xCOR, yCOR };
 	SetConsoleCursorPosition(h, c);
 }
 
@@ -99,13 +197,13 @@ void victorySituation()
 {
 	HANDLE hConsoleColor;
 	hConsoleColor = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(hConsoleColor, 30);// Set color yellow
+	SetConsoleTextAttribute(hConsoleColor, 14);// Set color yellow
 	for (int i = 1; i < row - 1; i++)
 		for (int j = 1; j < col - 1; j++)
 			if (Matrix[i][j] == 9 || Matrix[i][j] == -9)
 			{
 				gotoxy(j * 2 + 30, i + 3);
-				printf("F"); gotoxy(j * 2 + 30, i + 3);
+				printf("F");
 			}
 	gotoxy(20, row + 5);
 	SetConsoleTextAttribute(hConsoleColor, 14);
@@ -114,14 +212,51 @@ void victorySituation()
 	printf("Press any key to continue .."); getch();
 }
 
+void floodFill(int iZero, int jZero)// use Queue data structure
+{
+	HANDLE hConsoleColor;
+	hConsoleColor = GetStdHandle(STD_OUTPUT_HANDLE);
+	Queue *qI = initiateQueue();
+	Queue *qJ = initiateQueue();
+	Enqueue(qI, iZero);
+	Enqueue(qJ, jZero);
+	int tempI, tempJ, count = 0;
+	while (is_Empty(qI) == false)
+	{
+		tempI = Dequeue(qI);
+		tempJ = Dequeue(qJ);
+		if (Opened[tempI][tempJ] == false)
+		{
+			Opened[tempI][tempJ] = true;
+			cellLeft--;
+		}
+		gotoxy(30 + 2 * (tempJ), 3 + tempI);
+		printf("-");
+		for (int k = 0; k < 8; k++)
+			if (!(tempI + X[k] == 0 || tempI + X[k] == row - 1 || tempJ + Y[k] == 0 || tempJ + Y[k] == col - 1))
+				if (Matrix[tempI + X[k]][tempJ + Y[k]] == 0 && Opened[tempI + X[k]][tempJ + Y[k]] == false)// Put all neighbors 0's coordinate into queue
+				{
+					Enqueue(qI, tempI + X[k]);
+					Enqueue(qJ, tempJ + Y[k]);
+				}
+				else if (Matrix[tempI + X[k]][tempJ + Y[k]] > 0 && Matrix[tempI + X[k]][tempJ + Y[k]] != 10 && Opened[tempI + X[k]][tempJ + Y[k]] == false)
+				{// reveal all none zero neighbors
+					gotoxy(30 + 2 * (tempJ + Y[k]), 3 + tempI + X[k]);
+					changeColor(Matrix[tempI + X[k]][tempJ + Y[k]]);
+					Opened[tempI + X[k]][tempJ + Y[k]] = true;
+					printf("%d", Matrix[tempI + X[k]][tempJ + Y[k]]);
+					SetConsoleTextAttribute(hConsoleColor, 15);
+					cellLeft--;
+				}
+	}
+}
+
 bool index_Open(int index_i, int index_j)// Coordinate of hit index
 {
 	HANDLE hConsoleColor;
 	hConsoleColor = GetStdHandle(STD_OUTPUT_HANDLE);
 	int count_Flag = 0;
 	int index = Matrix[index_i][index_j];
-	int X[8] = { -1,-1,-1,0,1,1,1,0 };
-	int Y[8] = { -1,0,1,1,1,0,-1,-1 };
 	for (int k = 0; k < 8; k++)// count flags around the index
 		if (Matrix[index_i + X[k]][index_j + Y[k]] == 10 || Matrix[index_i + X[k]][index_j + Y[k]] < 0)
 			count_Flag++;
@@ -130,17 +265,22 @@ bool index_Open(int index_i, int index_j)// Coordinate of hit index
 	//----------------
 	bool hitBomb = false;
 	int count = 0;
-	if (index == count_Flag)
+	if (index <= count_Flag)
 	{
 		for (int k = 0; k < 8; k++)
 		{
 			if (Matrix[index_i + X[k]][index_j + Y[k]] == 9)// hit bomb
 				hitBomb = true;
-			if ((index_i + X[k] > 0 && index_i + X[k] < row - 1) && (index_j + Y[k] > 0 && index_j + Y[k] < col - 1))
+			if (!(index_i + X[k] == 0 || index_i + X[k] == row - 1 || index_j + Y[k] == 0 || index_j + Y[k] == col - 1))
 				if (Matrix[index_i + X[k]][index_j + Y[k]] >= 0 && Matrix[index_i + X[k]][index_j + Y[k]] != 10 && Opened[index_i + X[k]][index_j + Y[k]] == false)
 				{
-					Opened[index_i + X[k]][index_j + Y[k]] = true;
-					count++;
+					if (Matrix[index_i + X[k]][index_j + Y[k]] == 0)
+						floodFill(index_i + X[k], index_j + Y[k]);
+					else
+					{
+						Opened[index_i + X[k]][index_j + Y[k]] = true;
+						count++;
+					}
 				}
 		}
 		for (int k = 0; k < 8; k++)
@@ -153,12 +293,8 @@ bool index_Open(int index_i, int index_j)// Coordinate of hit index
 				else
 					printf("%d", Matrix[index_i + X[k]][index_j + Y[k]]);
 			}
-		SetConsoleTextAttribute(hConsoleColor, 15);
 	}
 	cellLeft -= count;
-	/*gotoxy(0, 5);
-	printf("index: %d\nind_i: %d\nind_j: %d\ncount: %d\ncellLeft: %d", index, index_i, index_j, count, cellLeft);
-	printf("\n\n");*/
 	gotoxy(x, y);
 	return hitBomb;
 }
@@ -228,7 +364,7 @@ bool Control()
 					//--------------------------------------------
 		case 32:	if (Matrix[matrixY][matrixX] == 9) // Hit bomb
 					{
-						loseSituation(matrixY,matrixX);
+						loseSituation(matrixY, matrixX);
 						return false;
 					}
 					if (Opened[matrixY][matrixX] == true && Matrix[matrixY][matrixX] > 0)
@@ -242,29 +378,31 @@ bool Control()
 					}
 					else if (Matrix[matrixY][matrixX] >= 0 && Matrix[matrixY][matrixX] != 10 && Opened[matrixY][matrixX] == false)// Open cell
 					{
-						changeColor(Matrix[matrixY][matrixX]);
-						Opened[matrixY][matrixX] = true;
 						if (Matrix[matrixY][matrixX] == 0)
-							printf("-");
+							floodFill(matrixY, matrixX);
 						else
-							printf("%d", Matrix[matrixY][matrixX]);
-						SetConsoleTextAttribute(hConsoleColor, 15);
-						cellLeft--;
-						gotoxy(x, y);
+						{
+							changeColor(Matrix[matrixY][matrixX]);
+							Opened[matrixY][matrixX] = true;
+								printf("%d", Matrix[matrixY][matrixX]);
+							SetConsoleTextAttribute(hConsoleColor, 15);
+							cellLeft--;
+							gotoxy(x, y);
+						}
 					}
 		default: break;
 		}
-		if (cellLeft == 0)// Victory
-		{
-			victorySituation();
-			return true;
-		}
-		SetConsoleTextAttribute(hConsoleColor, 14);
+		SetConsoleTextAttribute(hConsoleColor, 12);
 		gotoxy(20, 5); printf("%3d", cellLeft);
 		gotoxy(20, 7); printf("%3d", mineNum);
 		gotoxy(10, 10); printf("%2d", matrixX);
 		gotoxy(20, 10); printf("%2d", matrixY);
 		SetConsoleTextAttribute(hConsoleColor, 15); gotoxy(x, y);
+		if (cellLeft == 0)// Victory
+		{
+			victorySituation();
+			return true;
+		}
 	}
 	return true;
 }
@@ -285,8 +423,6 @@ void setMine()
 		else
 			continue;
 	}
-	int X[8] = { -1,0,1,1,1,0,-1,-1 };
-	int Y[8] = { -1,-1,-1,0,1,1,1,0 };
 	for (int i = 1; i < row - 1; i++)
 		for (int j = 1; j < col - 1; j++)
 			if (Matrix[i][j] == 9)
@@ -297,6 +433,7 @@ void setMine()
 
 void setMap()
 {
+	//--------In Game Map-------
 	x = 30, y = 3;
 	gotoxy(x, y); y++;
 	printf("%c", 201);
@@ -349,14 +486,14 @@ void setLevel()
 	col += 2; row += 2;
 }
 
-bool menu()
+bool menu()// Redesign menu
 {
 	HANDLE hConsoleColor;
 	hConsoleColor = GetStdHandle(STD_OUTPUT_HANDLE);
 	gotoxy(50, 3);
 	SetConsoleTextAttribute(hConsoleColor, 11);
 	printf("WELCOME TO MINESWEEPER"); gotoxy(50, 4); SetConsoleTextAttribute(hConsoleColor, 13);
-	printf("--Created by TamTee--"); gotoxy(25, 6); SetConsoleTextAttribute(hConsoleColor, 15);
+	printf("--Written by TamTee--"); gotoxy(25, 6); SetConsoleTextAttribute(hConsoleColor, 15);
 	printf("Choose a level"); gotoxy(32, 7); SetConsoleTextAttribute(hConsoleColor, 10);
 	printf("1. 8x11: Easy"); gotoxy(32, 8); SetConsoleTextAttribute(hConsoleColor, 14);
 	printf("2. 14x20 : Normal"); gotoxy(32, 9); SetConsoleTextAttribute(hConsoleColor, 12);
@@ -365,16 +502,18 @@ bool menu()
 	printf("You choose : ");
 	while (1)
 	{
-		scanf("%d", &level);
-		if (level > 3 || level < 0)
+		switch (_getch())
 		{
-			gotoxy(25, 12);
+		case 49: level = 1; goto NEXT;
+		case 50: level = 2; goto NEXT;
+		case 51: level = 3; goto NEXT;
+		case 48: level = 0; goto NEXT;
+		default: gotoxy(25, 12);
 			printf("Wrong level input, choose again: ");
 			continue;
 		}
-		else
-			break;
 	}
+	NEXT:
 	if (level == 0)
 		return true;
 	setLevel();
@@ -394,43 +533,23 @@ void main()
 			return;
 		system("cls");
 		setMap();
-		matrix_Output();
+		//matrix_Output();
 		bool play = Control();
+		system("cls");
+		gotoxy(30, 5);
 		if (play == false)
-		{
-			system("cls");
-			gotoxy(30, 5);
 			printf("Do you wish to try again?\n\t\t1. Yes\n\t\t0. Exit ");
-			while (1)
-			{
-				switch (getch())
-				{
-				case '1': goto Playing; break;
-				case '0': return;
-				default: break;
-				}
-			}
-		}
 		else
-		{
-			system("cls");
-			gotoxy(30, 5);
 			printf("Take another victory?\n\t\t1. Yes\n\t\t0. Exit ");
-			while (1)
+		while (1)
+		{
+			switch (getch())
 			{
-				switch (getch())
-				{
-				case '1': goto Playing; break;
-				case '0': return;
-				default: break;
-				}
+			case '1': goto Playing; break;
+			case '0': return;
+			default: break;
 			}
 		}
 	}
-	//menu();
-	//setMine();
-	//setMap();
-	//matrix_Output();
-	//Control();
 	_getch();
 }
