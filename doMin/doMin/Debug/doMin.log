@@ -1,4 +1,4 @@
 ﻿  doMin.cpp
-c:\users\windows 10 gamer\desktop\minesweeper\domin\domin\domin.cpp(127): warning C4838: conversion from 'int' to 'SHORT' requires a narrowing conversion
-c:\users\windows 10 gamer\desktop\minesweeper\domin\domin\domin.cpp(523): warning C4326: return type of 'main' should be 'int' instead of 'void'
+c:\users\windows 10 gamer\desktop\minesweeper\domin\domin\domin.cpp(129): warning C4838: conversion from 'int' to 'SHORT' requires a narrowing conversion
+c:\users\windows 10 gamer\desktop\minesweeper\domin\domin\domin.cpp(528): warning C4326: return type of 'main' should be 'int' instead of 'void'
   doMin.vcxproj -> C:\Users\Windows 10 Gamer\Desktop\mineSweeper\doMin\Debug\doMin.exe

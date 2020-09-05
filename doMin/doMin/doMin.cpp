@@ -159,7 +159,7 @@ void changeColor(int k)
 	case 1: SetConsoleTextAttribute(hConsoleColor, 9); break;
 	case 2: SetConsoleTextAttribute(hConsoleColor, 2); break;
 	case 3: SetConsoleTextAttribute(hConsoleColor, 4); break;
-	case 4: SetConsoleTextAttribute(hConsoleColor, 7); break;
+	case 4: SetConsoleTextAttribute(hConsoleColor, 11); break;
 	case 5: SetConsoleTextAttribute(hConsoleColor, 5); break;
 	case 6: SetConsoleTextAttribute(hConsoleColor, 3); break;
 	case 7: SetConsoleTextAttribute(hConsoleColor, 6); break;
@@ -392,7 +392,7 @@ bool Control()
 					}
 		default: break;
 		}
-		SetConsoleTextAttribute(hConsoleColor, 12);
+		SetConsoleTextAttribute(hConsoleColor, 11);
 		gotoxy(20, 5); printf("%3d", cellLeft);
 		gotoxy(20, 7); printf("%3d", mineNum);
 		gotoxy(10, 10); printf("%2d", matrixX);
@@ -480,7 +480,8 @@ void setLevel()
 	{
 	case 1: col = 8; row = 11; mineNum = 10; break;
 	case 2: col = 14; row = 20; mineNum = 39; break;
-	default: col = 20; row = 29; mineNum = 102; break;
+	case 3: col = 20; row = 29; mineNum = 102; break;
+	default: col = 26; row = 38; mineNum = 230; break;
 	}
 	cellLeft = col * row - mineNum;
 	col += 2; row += 2;
@@ -490,15 +491,16 @@ bool menu()// Redesign menu
 {
 	HANDLE hConsoleColor;
 	hConsoleColor = GetStdHandle(STD_OUTPUT_HANDLE);
-	gotoxy(50, 3);
+	gotoxy(90, 6);
 	SetConsoleTextAttribute(hConsoleColor, 11);
-	printf("WELCOME TO MINESWEEPER"); gotoxy(50, 4); SetConsoleTextAttribute(hConsoleColor, 13);
-	printf("--Written by TamTee--"); gotoxy(25, 6); SetConsoleTextAttribute(hConsoleColor, 15);
-	printf("Choose a level"); gotoxy(32, 7); SetConsoleTextAttribute(hConsoleColor, 10);
-	printf("1. 8x11: Easy"); gotoxy(32, 8); SetConsoleTextAttribute(hConsoleColor, 14);
-	printf("2. 14x20 : Normal"); gotoxy(32, 9); SetConsoleTextAttribute(hConsoleColor, 12);
-	printf("3. 20x29 : Hard"); gotoxy(32, 10); SetConsoleTextAttribute(hConsoleColor, 7);
-	printf("0. Exit"); gotoxy(25, 12); SetConsoleTextAttribute(hConsoleColor, 15);
+	printf("WELCOME TO MINESWEEPER"); gotoxy(90, 7); SetConsoleTextAttribute(hConsoleColor, 13);
+	printf("--Written by TamTee--"); gotoxy(57, 9); SetConsoleTextAttribute(hConsoleColor, 15);
+	printf("Choose a level"); gotoxy(64, 11); SetConsoleTextAttribute(hConsoleColor, 10);
+	printf("1. 8x11: Easy"); gotoxy(64, 13); SetConsoleTextAttribute(hConsoleColor, 14);
+	printf("2. 14x20 : Normal"); gotoxy(64, 15); SetConsoleTextAttribute(hConsoleColor, 12);
+	printf("3. 20x29 : Hard"); gotoxy(64, 17); SetConsoleTextAttribute(hConsoleColor, 13);
+	printf("4. 26x38 : Expert"); gotoxy(64, 19); SetConsoleTextAttribute(hConsoleColor, 7);
+	printf("0. Exit"); gotoxy(57, 21); SetConsoleTextAttribute(hConsoleColor, 15);
 	printf("You choose : ");
 	while (1)
 	{
@@ -507,8 +509,9 @@ bool menu()// Redesign menu
 		case 49: level = 1; goto NEXT;
 		case 50: level = 2; goto NEXT;
 		case 51: level = 3; goto NEXT;
+		case 52: level = 4; goto NEXT;
 		case 48: level = 0; goto NEXT;
-		default: gotoxy(25, 12);
+		default: gotoxy(57, 21);
 			printf("Wrong level input, choose again: ");
 			continue;
 		}
@@ -533,7 +536,7 @@ void main()
 			return;
 		system("cls");
 		setMap();
-		//matrix_Output();
+		matrix_Output();
 		bool play = Control();
 		system("cls");
 		gotoxy(30, 5);
